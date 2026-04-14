@@ -178,150 +178,973 @@
 
 
 <body>
-	@require '../common/variables'
+	<div class="progress-bar-container">
+	
 
-.page-title-header
-  font-size 3.2rem
-  line-height 1
-  font-weight bold
-  color var(--second-text-color)
-  margin 6px 0 36px 0
+	
+	<span class="pjax-progress-bar"></span>
+	<!--        <span class="swup-progress-icon">-->
+	<!--            <i class="fa-solid fa-circle-notch fa-spin"></i>-->
+	<!--        </span>-->
+	
+</div>
 
-.page-container
-  position relative
-  box-sizing border-box
-  width 100%
-  height auto
-  background var(--background-color)
+<style>
+    :root {
+        --preloader-background-color: #fff;
+        --preloader-text-color: #000;
+    }
 
-  +redefine-tablet()
-    padding-right 0 !important
+    @media (prefers-color-scheme: dark) {
+        :root {
+            --preloader-background-color: #202124;
+            --preloader-text-color: #fff;
+        }
+    }
 
-  .main-content-container
-    padding-top $navbar-height
-    position relative
-    transition padding 0.2s ease
+    @media (prefers-color-scheme: light) {
+        :root {
+            --preloader-background-color: #fff;
+            --preloader-text-color: #000;
+        }
+    }
 
-    .navbar-shrink &
-      padding-top $navbar-shrink-height
-      transition padding 0.2s ease
+    @media (max-width: 600px) {
+        .ml13 {
+            font-size: 2.6rem !important; /* Adjust this value as needed */
+        }
+    }
 
-      +redefine-tablet()
-        padding-top: ($navbar-shrink-height * 0.9)
+    .preloader {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem; /* Tailwind 'gap-4' is 1rem */
+        align-items: center;
+        justify-content: center;
+        position: fixed;
+        padding: 12px;
+        top: 0;
+        right: 0;
+        bottom: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh; /* 'h-screen' is 100% of the viewport height */
+        background-color: var(--preloader-background-color);
+        z-index: 1100; /* 'z-[1100]' sets the z-index */
+        transition: opacity 0.2s ease-in-out;
+    }
 
-      +redefine-mobile()
-        padding-top: $navbar-shrink-height * 0.8
+    .ml13 {
+        font-size: 3.2rem;
+        /* text-transform: uppercase; */
+        color: var(--preloader-text-color);
+        letter-spacing: -1px;
+        font-weight: 500;
+        font-family: 'Chillax-Variable', sans-serif;
+        text-align: center;
+    }
 
-    +redefine-tablet()
-      padding-top: $navbar-height * 0.9
+    .ml13 .word {
+        display: inline-flex;
+        flex-wrap: wrap;
+        white-space: nowrap;
+    }
 
-    +redefine-mobile()
-      padding-top: $navbar-height * 0.8
+    .ml13 .letter {
+        display: inline-block;
+        line-height: 1em;
+    }
+</style>
 
-    .main-content-header
-      position fixed
-      top 0
-      right 0
-      width 100%
-      height $navbar-height
-      z-index $z-index-5
-      box-sizing border-box
-      transition-t('transform, padding-left, height', '0, 0, 0', '0.3, 0.2, 0.2', 'ease-out, linear, ease')
+<div class="preloader">
+    <h2 class="ml13">
+        Loading...
+    </h2>
+    <script>
+        var textWrapper = document.querySelector('.ml13');
+        // Split text into words
+        var words = textWrapper.textContent.trim().split(' ');
 
-      &.hide
-        transform translateY(-105%)
+        // Clear the existing content
+        textWrapper.innerHTML = '';
 
-      .navbar-shrink &
-        height $navbar-shrink-height
+        // Wrap each word and its letters in spans
+        words.forEach(function(word) {
+            var wordSpan = document.createElement('span');
+            wordSpan.classList.add('word');
+            wordSpan.innerHTML = word.replace(/\S/g, "<span class='letter'>$&</span>");
+            textWrapper.appendChild(wordSpan);
+            textWrapper.appendChild(document.createTextNode(' ')); // Add space between words
+        });
 
-        +redefine-tablet()
-          height: ($navbar-shrink-height * 0.9)
+        var animation = anime.timeline({ loop: true })
+            .add({
+                targets: '.ml13 .letter',
+                translateY: [20, 0],
+                translateZ: 0,
+                opacity: [0, 1],
+                filter: ['blur(5px)', 'blur(0px)'],
+                easing: "easeOutExpo",
+                duration: 1200,
+                delay: (el, i) => 300 + 20 * i,
+            })
+            .add({
+                targets: '.ml13 .letter',
+                translateY: [0, -20],
+                opacity: [1, 0],
+                filter: ['blur(0px)', 'blur(5px)'],
+                easing: "easeInExpo",
+                duration: 1000,
+                delay: (el, i) => 15 * i,
+                complete: function() {
+                    hidePreloader();
+                }
+            }, '-=700');
 
-        +redefine-mobile()
-          height: $navbar-shrink-height * 0.8
 
-      +redefine-tablet()
-        height: $navbar-height * 0.9
-        padding-left 0 !important
+        let themeStatus = JSON.parse(localStorage.getItem('REDEFINE-THEME-STATUS'))?.isDark;
 
-      +redefine-mobile()
-        height: $navbar-height * 0.8
+        // If the theme status is not found in local storage, check the preferred color scheme
+        if (themeStatus === undefined || themeStatus === null) {
+            if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+                themeStatus = 'dark';
+            } else {
+                themeStatus = 'light';
+            }
+        }
 
-    .main-content-body
-      box-sizing border-box
-      width 100%
-      display flex
-      justify-content center
-      padding $spacing-unit 0
+        // Now you can use the themeStatus variable in your code
+        if (themeStatus) {
+            document.documentElement.style.setProperty('--preloader-background-color', '#202124');
+            document.documentElement.style.setProperty('--preloader-text-color', '#fff');
+        } else {
+            document.documentElement.style.setProperty('--preloader-background-color', '#fff');
+            document.documentElement.style.setProperty('--preloader-text-color', '#000');
+        }
 
-      +redefine-tablet()
-        padding ($spacing-unit * 0.8) 0
+        window.addEventListener('load', function () {
+            setTimeout(hidePreloader, 5000); // Call hidePreloader after 5000 milliseconds if not already called by animation
+        });
 
-      +redefine-mobile()
-        border none !important
-        padding-top 0
+        function hidePreloader() {
+            var preloader = document.querySelector('.preloader');
+            preloader.style.opacity = '0';
+            setTimeout(function () {
+                preloader.style.display = 'none';
+            }, 200);
+        }
+    </script>
+</div>
 
-      .main-content
-        position relative
-        box-sizing border-box
-        width $main-content-width
-        max-width $content-max-width
-        height 100%
-        transition-t('max-width, width', '0, 0', '0.2, 0.2', 'ease, ease')
+<main class="page-container" id="swup">
 
-        +redefine-tablet()
-          width $main-content-width-tablet
+	
 
-        +redefine-mobile()
-          width $main-content-width-mobile
+	<div class="main-content-container flex flex-col justify-between min-h-dvh">
+		<div class="main-content-header">
+			<header class="navbar-container px-6 md:px-12">
+    <div class="navbar-content transition-navbar ">
+        <div class="left">
+            
+            <a class="logo-title" href="/">
+                
+                SomeoneLearning
+                
+            </a>
+        </div>
 
-        &.has-toc
-          max-width $has-toc-content-max-width !important
+        <div class="right">
+            <!-- PC -->
+            <div class="desktop">
+                <ul class="navbar-list">
+                    
+                        
+                            
 
-      .main-content-footer
-        width 100%
+                            <li class="navbar-item">
+                                <!-- Menu -->
+                                <a class=""
+                                   href="/"
+                                        >
+                                    <i class="fa-regular fa-house fa-fw"></i>
+                                    首页
+                                    
+                                </a>
 
-  .post-tools
-    position fixed
-    top: $navbar-height + $spacing-unit
-    right $spacing-unit
-    transition-t('top', '0', '0.2', 'ease')
+                                <!-- Submenu -->
+                                
+                            </li>
+                    
+                        
+                            
 
-    .navbar-shrink &
-      top: $navbar-shrink-height + $spacing-unit
+                            <li class="navbar-item">
+                                <!-- Menu -->
+                                <a class=""
+                                   href="/bookmarks/"
+                                        >
+                                    <i class="fa-solid fa-bookmark fa-fw"></i>
+                                    书签
+                                    
+                                </a>
 
-      +redefine-tablet()
-        top ($navbar-shrink-height * 0.9) + $spacing-unit
+                                <!-- Submenu -->
+                                
+                            </li>
+                    
+                        
+                            
 
-      +redefine-mobile()
-        top: ($navbar-shrink-height * 0.8 + $spacing-unit)
+                            <li class="navbar-item">
+                                <!-- Menu -->
+                                <a class="has-dropdown"
+                                   href="#"
+                                        onClick=&#34;return false;&#34;>
+                                    <i class="fa-regular fa-archive fa-fw"></i>
+                                    归档
+                                    <i class="fa-solid fa-chevron-down fa-fw"></i>
+                                </a>
 
-    +redefine-tablet()
-      top: ($navbar-height * 0.9 + $spacing-unit)
-      right 10px
-      transform scale(0.82)
-      transform-origin right top
+                                <!-- Submenu -->
+                                
+                                    <ul class="sub-menu">
+                                        
+                                            <li>
+                                                <a href="/archives">
+                                                    时间轴
+                                                </a>
+                                            </li>
+                                        
+                                            <li>
+                                                <a href="/categories">
+                                                    分类
+                                                </a>
+                                            </li>
+                                        
+                                            <li>
+                                                <a href="/tags">
+                                                    标签
+                                                </a>
+                                            </li>
+                                        
+                                    </ul>
+                                
+                            </li>
+                    
+                        
+                            
 
-    +redefine-mobile()
-      display none
-      top: ($navbar-height * 0.8 + $spacing-unit)
-      right 5px
-      transform scale(0.72)
+                            <li class="navbar-item">
+                                <!-- Menu -->
+                                <a class="has-dropdown"
+                                   href="#"
+                                        onClick=&#34;return false;&#34;>
+                                    <i class="fa-regular fa-user fa-fw"></i>
+                                    关于
+                                    <i class="fa-solid fa-chevron-down fa-fw"></i>
+                                </a>
 
-  .right-side-tools-container
-    position fixed
-    bottom 5%
-    right $spacing-unit
-    opacity 1
-    transition opacity 0.2s ease
+                                <!-- Submenu -->
+                                
+                                    <ul class="sub-menu">
+                                        
+                                            <li>
+                                                <a href="/_posts">
+                                                    ME
+                                                </a>
+                                            </li>
+                                        
+                                            <li>
+                                                <a target="_blank" rel="noopener" href="https://github.com/SomeoneLearning">
+                                                    GITHUB
+                                                </a>
+                                            </li>
+                                        
+                                    </ul>
+                                
+                            </li>
+                    
+                    
+                </ul>
+            </div>
+            <!-- Mobile -->
+            <div class="mobile">
+                
+                <div class="icon-item navbar-bar">
+                    <div class="navbar-bar-middle"></div>
+                </div>
+            </div>
+        </div>
+    </div>
 
-    &.hide
-      opacity 0
-      pointer-events none
-      transition opacity 0.2s ease
+    <!-- Mobile sheet -->
+    <div class="navbar-drawer h-dvh w-full absolute top-0 left-0 bg-background-color flex flex-col justify-between">
+        <ul class="drawer-navbar-list flex flex-col px-4 justify-center items-start">
+            
+                
+                    
 
-    +redefine-mobile()
-      right 12px
+                    <li class="drawer-navbar-item text-base my-1.5 flex flex-col w-full">
+                        
+                        <a class="py-1.5 px-2 flex flex-row items-center justify-between gap-1 hover:!text-primary active:!text-primary text-2xl font-semibold group border-b border-border-color hover:border-primary w-full "
+                           href="/"
+                        >
+                            <span>
+                                首页
+                            </span>
+                            
+                                <i class="fa-regular fa-house fa-sm fa-fw"></i>
+                            
+                        </a>
+                        
+
+                        
+                    </li>
+            
+                
+                    
+
+                    <li class="drawer-navbar-item text-base my-1.5 flex flex-col w-full">
+                        
+                        <a class="py-1.5 px-2 flex flex-row items-center justify-between gap-1 hover:!text-primary active:!text-primary text-2xl font-semibold group border-b border-border-color hover:border-primary w-full "
+                           href="/bookmarks/"
+                        >
+                            <span>
+                                书签
+                            </span>
+                            
+                                <i class="fa-solid fa-bookmark fa-sm fa-fw"></i>
+                            
+                        </a>
+                        
+
+                        
+                    </li>
+            
+                
+                    
+
+                    <li class="drawer-navbar-item-sub text-base my-1.5 flex flex-col w-full">
+                        
+                        <div class="py-1.5 px-2 flex flex-row items-center justify-between gap-1 hover:!text-primary active:!text-primary cursor-pointer text-2xl font-semibold group border-b border-border-color hover:border-primary w-full "
+                             navbar-data-toggle="submenu-Archives"
+                        >
+                            <span>
+                                归档
+                            </span>
+                            
+                                <i class="fa-solid fa-chevron-right fa-sm fa-fw transition-all"></i>
+                            
+                        </div>
+                        
+
+                        
+                            <div class="flex-col items-start px-2 py-2 hidden" data-target="submenu-Archives">
+                                
+                                    <div class="drawer-navbar-item text-base flex flex-col justify-center items-start hover:underline active:underline hover:underline-offset-1 rounded-3xl">
+                                        <a class=" text-third-text-color text-xl"
+                                           href="/archives">时间轴</a>
+                                    </div>
+                                
+                                    <div class="drawer-navbar-item text-base flex flex-col justify-center items-start hover:underline active:underline hover:underline-offset-1 rounded-3xl">
+                                        <a class=" text-third-text-color text-xl"
+                                           href="/categories">分类</a>
+                                    </div>
+                                
+                                    <div class="drawer-navbar-item text-base flex flex-col justify-center items-start hover:underline active:underline hover:underline-offset-1 rounded-3xl">
+                                        <a class=" text-third-text-color text-xl"
+                                           href="/tags">标签</a>
+                                    </div>
+                                
+                            </div>
+                        
+                    </li>
+            
+                
+                    
+
+                    <li class="drawer-navbar-item-sub text-base my-1.5 flex flex-col w-full">
+                        
+                        <div class="py-1.5 px-2 flex flex-row items-center justify-between gap-1 hover:!text-primary active:!text-primary cursor-pointer text-2xl font-semibold group border-b border-border-color hover:border-primary w-full "
+                             navbar-data-toggle="submenu-About"
+                        >
+                            <span>
+                                关于
+                            </span>
+                            
+                                <i class="fa-solid fa-chevron-right fa-sm fa-fw transition-all"></i>
+                            
+                        </div>
+                        
+
+                        
+                            <div class="flex-col items-start px-2 py-2 hidden" data-target="submenu-About">
+                                
+                                    <div class="drawer-navbar-item text-base flex flex-col justify-center items-start hover:underline active:underline hover:underline-offset-1 rounded-3xl">
+                                        <a class=" text-third-text-color text-xl"
+                                           href="/_posts">ME</a>
+                                    </div>
+                                
+                                    <div class="drawer-navbar-item text-base flex flex-col justify-center items-start hover:underline active:underline hover:underline-offset-1 rounded-3xl">
+                                        <a class=" text-third-text-color text-xl"
+                                           target="_blank" rel="noopener" href="https://github.com/SomeoneLearning">GITHUB</a>
+                                    </div>
+                                
+                            </div>
+                        
+                    </li>
+            
+
+            
+            
+                
+                    
+                    
+                    <li class="drawer-navbar-item text-base my-1.5 flex flex-col w-full">
+                        <a class="py-1.5 px-2 flex flex-row items-center justify-between gap-1 hover:!text-primary active:!text-primary text-2xl font-semibold group border-b border-border-color hover:border-primary w-full active"
+                           href="/tags"
+                        >
+                            <span>Tags</span>
+                            <i class="fa-regular fa-tags fa-sm fa-fw"></i>
+                        </a>
+                    </li>
+                
+                    
+                    <li class="drawer-navbar-item text-base my-1.5 flex flex-col w-full">
+                        <a class="py-1.5 px-2 flex flex-row items-center justify-between gap-1 hover:!text-primary active:!text-primary text-2xl font-semibold group border-b border-border-color hover:border-primary w-full active"
+                           href="/categories"
+                        >
+                            <span>Categories</span>
+                            <i class="fa-regular fa-folder fa-sm fa-fw"></i>
+                        </a>
+                    </li>
+                
+            
+        </ul>
+
+        <div class="statistics flex justify-around my-2.5">
+    <a class="item tag-count-item flex flex-col justify-center items-center w-20" href="/tags">
+        <div class="number text-2xl sm:text-xl text-second-text-color font-semibold">6</div>
+        <div class="label text-third-text-color text-sm">标签</div>
+    </a>
+    <a class="item tag-count-item flex flex-col justify-center items-center w-20" href="/categories">
+        <div class="number text-2xl sm:text-xl text-second-text-color font-semibold">4</div>
+        <div class="label text-third-text-color text-sm">分类</div>
+    </a>
+    <a class="item tag-count-item flex flex-col justify-center items-center w-20" href="/archives">
+        <div class="number text-2xl sm:text-xl text-second-text-color font-semibold">6</div>
+        <div class="label text-third-text-color text-sm">文章</div>
+    </a>
+</div>
+    </div>
+
+    <div class="window-mask"></div>
+
+</header>
+
+
+		</div>
+
+		<div class="main-content-body transition-fade-up">
+			
+
+			<div class="main-content">
+				<div class="post-page-container flex relative justify-between box-border w-full h-full">
+	<div class="article-content-container">
+
+		<div class="article-title relative w-full">
+			
+			<div class="w-full flex items-center pt-6 justify-start">
+				<h1 class="article-title-regular text-second-text-color tracking-tight text-4xl md:text-6xl font-semibold px-2 sm:px-6 md:px-8 py-3">SomeoneLearning</h1>
+			</div>
+			
+		</div>
+
+		
+		<div class="article-header flex flex-row gap-2 items-center px-2 sm:px-6 md:px-8">
+			<div class="avatar w-[46px] h-[46px] shrink-0 rounded-medium border border-border-color p-px">
+				<img src="/images/redefine-avatar.svg">
+			</div>
+			<div class="info flex flex-col justify-between">
+				<div class="author flex items-center">
+					<span class="name text-default-text-color text-lg font-semibold">SomeoneLearning</span>
+					
+					<span class="author-label ml-1.5 text-xs px-2 py-0.5 rounded-small text-third-text-color border border-shadow-color-1">Lv1</span>
+					
+				</div>
+				<div class="meta-info">
+					<div class="article-meta-info">
+    <span class="article-date article-meta-item">
+        <i class="fa-regular fa-pen-fancy"></i>&nbsp;
+        <span class="desktop">2026-03-24 10:55:36</span>
+        <span class="mobile">2026-03-24 10:55:36</span>
+        <span class="hover-info">创建</span>
+    </span>
+    
+        <span class="article-date article-meta-item">
+            <i class="fa-regular fa-wrench"></i>&nbsp;
+            <span class="desktop">2026-04-13 19:18:32</span>
+            <span class="mobile">2026-04-13 19:18:32</span>
+            <span class="hover-info">更新</span>
+        </span>
+    
+
+    
+        <span class="article-categories article-meta-item">
+            <i class="fa-regular fa-folders"></i>&nbsp;
+            <ul>
+                
+                
+                    
+                        
+                        <li>
+                            <a href="/categories/%E4%B8%AA%E4%BA%BA%E4%BB%8B%E7%BB%8D/">个人介绍</a>&nbsp;
+                        </li>
+                    
+                    
+                
+            </ul>
+        </span>
+    
+    
+        <span class="article-tags article-meta-item">
+            <i class="fa-regular fa-tags"></i>&nbsp;
+            <ul>
+                
+                    <li>
+                        <a href="/tags/Private/">Private</a>&nbsp;
+                    </li>
+                
+            </ul>
+        </span>
+    
+
+    
+    
+    
+    
+        <span class="article-pv article-meta-item">
+            <i class="fa-regular fa-eye"></i>&nbsp;<span id="busuanzi_value_page_pv"></span>
+        </span>
+    
+</div>
+
+				</div>
+			</div>
+		</div>
+		
+
+		
+
+
+		<div class="article-content markdown-body px-2 sm:px-6 md:px-8 pb-8">
+			
+<div class="hbe hbe-container" id="hexo-blog-encrypt" data-wpm="Oh, this is an invalid password. Check and try again, please." data-whm="OOPS, these decrypted content may changed, but you can still have a look.">
+  <script id="hbeData" type="hbeData" data-hmacdigest="c3ac802279f5f6af8a17a89243754335165904081f33c0f9af38103749aa4c0b">5844f566621fccb9c583f0174433e530cc56239991da94bde403a1ab176401b1ab17f7074909f95c91b4ebec930aa700f9e9a0e4002b3dfad55b0686bbab05068073c3339478fcba244759f74c21b6c684213e7a9fc8d09d7f6ff827b0d61044aec901a794b45f18107eefcde008a977623a5676323a21b9a64d1af710aa572a575a3c9c13654e0bc8e22101373ffe9d4551b20d783dfff565d5daee77ae2a2d158b986095b8a0b95bea828c252dddd43bf6ee55af2c24117335580a02d4e3e280ca02916769c70e0654deee2536206af656e24bd608ae4ac62f7e6265650a642d46b8c05440c40e7f1eeffae17f07cad628b2cf105e5732468ad698a30c966405de368813f433ac121276bfa4f4b35af005757da8239f3b2e221d5f9e99f67439a89e7bf0c2d5f131019bc7ce8399834790d464b17f7314a4bb2aa53f9024c0d55bbbf8696fa8df7acb4e74398ffa11769bcf4afb7a24c95920cc4e840e8817a0d910b8db0259fe20d7c222419ba2125f3012b63c63ee5a55e7a9b5de12360aa1285e600feb2e933b1990e947447890f43e64c36ce1cd909e6f6c398c0adb02fa65f0300bd3ce4b16080a7a17ace913310fe152384965657fcaf7f674cdf479f0234cc6f1e9550181508a18d9051c1c6b377705a94240cd8ab5dfe27e2c42607c1661174eec3cc34eee76d28577a0b5e7847e4d12a7e79c735caec975950f7b73ee7085ee1a9f2653a733d1503406b0b4acdbee3f661768e9427d5dd58922b4e26fcf17f07757d4e2ee93dc1adcf9e069980a5e291bb4562867dbe579bca095ad9991dea1a6d8e0029eae63e04bbc3b947d2f961897a316b8d34148414c28ecc209cff51afc023f4f6b9cd71510f099e2f91f0b7db047dff5acb6a9a649fab35a58badbdd4ce0b7df9b3f347973a8afa8dd93f890d4b3e07d7e7fcec6a3bff9f2247c378cddec97016cb54627f038bb5a561f9d89a9f4e087f3830a1ca869cd460458bdf25a86db13fee11f9f96d54974a58a82eccc7af36b3b0322f9bd9891952809a20e63697f92d506f1a1fba07d27caa45a51fc6f31ac9937eb672369960afa35d938c762571ed1e063b612a6daa7c33e75ad509cd288b7b2e762d8c022fcddb7f013a38975018fc6aeffc4564064cd6577dc1a8adc5c45b0150ab728593eedbbec251d983ec29638820837dc799feec68eeb516952e14635a700d7be777a7db43d5b1e3ab033064ebca7cdd486db421a427481660e1803d79994f012bcff638940f3162b59f196af3e3bcb51f19ff29185bff044dd89cb332db0c42386c679a31074172f0f58f3560b420fd05f9ebdc9993c7a4e4121036a919a31bf29cf5af2caed54276edeaa35f8120b0e43268b9ba422a1831a4273dd8c3515b56a478489881bab78078a71918e96fa13edc6a6657d8384204bacd1729bda4ccbd2eb93f2edba11e3e8e7beb69c9b14a546e1b7c067c2cda31da4d99283110f3f211366adec00d904cae47b19df2a8a2bb19f69ff6d759f910837e66661522350f1f6b9064a3df6978bec09ece7623548f255bd9021d8431d723dd89fd7f66a8221e0ea2eabfa0223cf0e037f94f7548d3595a80a4a1fd20792bbe697faf381d979291da47388163a0ee5ce349d6762379f2ca7c677467f7d37dc42f190db811bf3b39003882a2a204f673a47658fab92c8f352d8e7a57be7d691344839afe6ed20d250f957dac01b3a95043ccfacbadcd24a0c1a905d57cef537a281db4690bcdcfdb02dc866352377cab021db057cdad86287ba14b6e51493c9469b11e970253455c7decea36e950cdbb7b25ffe93e58c435dd99b94f9baa0f0a2d23bd4be29932e521f8202bedc483ee87ba52d81c80efe4b823915998e46052fa8525a16e56f52e0eae90b5ffde5cde7269d0b8068cbac60714648362f486ff52eb92520c4bdcfad0ea9e1670af671b468fa0e92b7b72b952de362ebd25857219faefde6eea26c79c05f9671c526edb78fbdb4304949029c0748a4591eec0deba7491406d72a23fd3821cde2a95673d1f094d5c9a08f218ce79b0dc4b72ef8cbae76838b312966820f89b92cfd97e6b2f9a1d33e77fc5ad080b594122f8e8758f58431ee2ae3f51c385345de7a6c094767902808f62e93a7ff216af65762c2f461bca4611df5a708ecdf8a84faf95188b736f3f96266c358111b61f7623f7e2294134036e95f54c530ee91e80b307c91ccf6d52ba34a2c01b85de2e2e00fc2e71a63edff4a6960a61966927176f6c74ded7776061d8d361efcac6a6d7426085a101870a913444a94e644619036e9ceb89a611f122257fefe06f179343cfd794ed35d6e53c2389a80c25d1d20ba5397f789daef237b5bb11482e407247e74da5b62037b1b7fd15b09405b9c25095907b2c70c0fd06ade95c590e0ce216e7d1bc4214be8dfdf08f60b1c06578ce1f15644776e9cccaeaf900c6aa8cbcce3ed6ac157e1fb1458df37418a5083a3b2bb5b868009b6cbbfe54257d91ba47ef9d30dc971213295f6fb5f2b03ebc8038a914059ef61199792a7e327ec692ee475fe9ee8f6c250155eeeccba92d1b8d3706e64fc46fc108c2914fd0d06c37cf77f25fb6591f587303bdffcc3b3181c0a55da420503bb758731978c1de759dc8ad2e6abb77f0387770957c44b30d4ba0c9eb2217469f5ac231041c0a8fa895ba58a5bc7b2ea0d71c7a4e23a0653f8283d36505482035e429959d400005038aaf9d00161f828653902aa63bc963752caf1f3b8d35edbf4a10c868a6914006da649e449c6e61dbd812a56825326d92330508d4a8d20c61808425b83cf1eab17a6746e84298612f9c44534994274dde4b5a2910fc953137d1349a7d0a8aa15dee6e16b60c22f8264b4c3e1d69398b7cc56fc327ef3c9d2f987b42f3be78fc756e050e829be0488d28a78cd71f2ca55573b9b0998ddcedcb01f6bcb9e5bf5e81f63285fb1acf59f3b598b7981d2995a4df27f6c9e75d58e1ae0bebe0c7ab4d8b688f60aeb7a0bf0995758ce428669fe82f4ab169513f62d6672df9a58d5b4f55c7f54caf9ada1b85df38105ee18de9894463446735426a6c16cc9ca0444041b2fce0b6ca0a5ac7f4eaef9f6c998fd505a7072497337ac4d6d5640bbbc34e7680f0db1f2f90258638a509ffb3494f9daa966cecf2cd8d9962d22c4f5d9ff9386b9d90fb0bd8529b7c2a4db0ffcc271cba0270b48a315ad96617cddf62e737ba366fbd435057e1466b436d418ed38c07fe62a7d617b651e1debddbdf5d13a932f305297cb89b7acab5aef0a8324c6956f891652c52144fad03c351872511815229172399ce0b6e235be26040606935c8e66eed966d464c1b6f7a9d99b3a96d4fd213dcaa49249e9c31c62717438652ed0e96ec759438ca7cadaba213020dc6d95b5ff10fb7f668132a5dcaa3208cf73b96fc3437b31387df803692ace028c3ed65509694b2c3caa5e77e98a7821c376f8b9c16b13aacef88ebdc73eca129ebcafcee71f269f4996e07f9e053a4aff1853370156b2900aaff7f89c22ca655d2c505f9c3af82a9a660eacb196365ab0f137b45fbad1578393d7fd4259d4823777909bc52c07de35e8436ec90b3cbdc0d959f42f00c5d7ab5741285d2f8c6db97842e1c5f785f7fa7f336f886e4ea0437a3e7d9dfe5336f90ffb3f7d3135929deb1b9ad5839b8f291e62a0da4cb2b19b90a2d03bab727e4664aad8931962466e72ea8b435cf77f121aa520b939fc683aa32735b023ca5043e57f909d6901d4c95a6b249a43a887b5d16360f1dc4b7d1178fe65ef147b790d29504c58afe2123356ce2620523db5d96e5a958ba52439849990292413a5303a274992553972eb4420883fd8cf18fdd8beb062057394a1d3e5c75337cd806a685c7591fd4dcdee263444b96a47e77ef581564b60ebadf8b53d5368aaeadf06a71b67caf62009c6c10629a10383e0ebe2d913b3c99c7024f6123746cfb215b6fa986e1f4f6d12517566e98fb820f524674734ca25f2e05a36064c9a4852aaeff93f9004bc6c911fef62d4935515a47bc79bfb4848109b7b16321e23131ceff9d0d9ffc312e95b24f6ba76527ef2650c4a66a32c115903c613eb8612bd239b4dca597240f9a6d626479b9fd59cd0e1b05ec6baea9d4bfee568888bbc6864a94df9cda5e55c864291dc9592da7a87e9e96bc9d20ac367150f64bbeab489802a26b581a683b0ddbbf781be220499d0e1ea64dc30cff0125f9bb1acab753257c1514d4cf0a687299e90ad42239fa5f2e3f525cdd8958cc634266a8f0f1374daf3864d35adfd6aa76b7014e741cfa9283cc3130f55711c4049b562af55e0b446137f76c67ac0af0f074857b004ecf7229a9d54759dc1b8a705c6f0c37bd0cf9aab173544b4389a504ed50a8579fe25d94bb7ca614d932ae6ef1980e64f0d782228515b678bb7cafd98a7838e17b435195338ce435620cfdde8c253af2e68fcc7b645541b7f661e095be193f7bb592570adec9712784a9f404ca449d98777f5160a4dcbc9715523cb2314e06005f3f892a4b12a9f9b03c23ef91f67e3b64a1c2adaaf2aa7ee7ce2d588937622263dbba57476641d2cb01e4ea6d078d15187d3670cb96807f32ea85a02963317a9d3f571551befbaaaafc5f8281f6bf830ecb700a9359c5186ff7af6977873b760065ce47641dce8d29c25b388da17836ea34de968fe69d210cf0f7f21febaf0f5d49fa0f242fd8e452da95e973a877a77ba0b2651bda5ea5f7f231c09ba5317c5a97f3e2ca05d51656afdf14c8d98e30e81117ef375e665e7ed4923f0054c47b890f65a9d68a81bc2d1f5232d6ef40330951b33d5ac61e6a4c1fb1a42754e40c2e63e45f290774cb646ed7c72e2420214d18b770cfd4a8aafe91e6cc630507321202f3112d6538cbc1adf128f5cea0ce65f3d65909d3bed2e69daa18f1f331b632fc37ed608d2c733152f3a8204c83c2878023c251849616a7990800b58cee7d30c788b8e232a25366e4a4323d0ffd0614ad5e57aa59cca4fcd52b49f993e24a08cde880975f8f9ef98772e5c93e9120e73ca63447e5536086149b7a5a4d4be319f14630499ee7dffa7e3d5ea950e22b1f52d0d54ced1e07451b645cd85f87f6d626a522d7c77a2f6ce22351f60db846176c9c065830bb24e7dba2764b2badfeed24e0ec6e81c44c5ca4d582d630499998b064d40e26d4d6f7a703975f5b41942c767d3dcc17732ad3569a0ffab23a4dda57eb9255436471ee7ef8fd01462124d47324bca9e8b37a35ab08278b036f12c419f2efdf87310f68935cee62d86b89a0eb4844d5ba7290a9d43e173e338b96e435c385636af23c80d607f5889978b83745bf98cec19eb4a90f0aea7cc60422e67438be5b96ab36cc06ca01f4dc6aee7c2209e51019beb295f5d6fc13cdbd30078b119f84f9179b1a4a82cd776fed8ed431e581f5b5cd71afd655ba1712b74b49697e2614d8765819b6b2e2bced0a68bc492d35859b9a108db652b8717e63dae7452d83d31ab0ff0b0ceaf807142d86bd11cc464aa0aa770358a5079669da6388a04bf45a4b224c8001a79c01e61058c67012577ea469bb2b331b7871419c805d31b2413610bf8a3b2bf093b409fb91544421a95fa9509359396d23ce35af6b8095ca6cf7e13cb8f22e4c33e35085330684e5683fac6ee10e3fb82c7043b5c15e52807d1bf8b7e53a23ee1686350e200654ebd6781245b79a1a833d976b3052a08a9505f574012e1a8d0df600a317a1e564469c26d8466bfb619fc626fdc85360959a0b84d275e9c62fc84171e884f00ea13c676f8c2f147e4626ab73dfbda4356ef3a5e0a935c9127ba317cc1e3ea5cee9b647cfff13c98de91ecfd3425467cc22ca897aae74046abe66816f24cf95ef0ca8cca8c80651ab7ee69f0ac0bb9533c6d6b3a3ae89ed6e00eb1c4884c19e27843bb6e6341c8725370ba840c46a6141ff1f203e71aa6a496b751653730d8ea4abda5af517c85498f994c2bdadcb96bd3c677a74e4477c130f52a993c163aad79faf3f4002621e5fb003ee1a7c05b45745e57a725faa95cae82003d8f3fe7c7a54a158c9cf8eeb6d89a2467fbab512c2b6e0b4e26c1a5b5a88a796cdbb2ea05cac5257767053b796da2a6bfd7fc6b188e96d123a1c0a87287d5f4755aa97d06d20b384ca00ae554d0cfe452724bf19f309fb90a099ee95c01e8181eb516379da127ddb3f65362ce21980429ca443d6c2357c31206cfa23afa0af6f588a6d67a5ea773678164685c2c01d0ad434501916bce7da694e357f7ab63c42c664522af50a5b585c085fecf218d5486d88b311f6db6d2f44a212a7dbf95757d3da773d8a488edb5bf68e666211567bdc6d5b707a7534626e5f3e690029602c3618e79589473102984736809c80a6e8aac00353336797b4e13253835189f7642adf6257a66348370a5f18d8b5deed1d0258e6f9bd348060e14469efd8252526b429f0ac05614cac38f63ec133aa93fdf41bce75fa97af69a89de5dc25e721ccd2e1e030cbf7ba229a00ed0701c9963ce11f06c8fd6d778da527a2665407716a4f02bed0829412182da5456f57d9297e2c160cb931f1525961ad1eec645cbf98981cc3ab9f08c0b3e68dc509604d2764a9093a70938501bc5b3efce912e9f44aa8b2b5f11da1def6f827a75557915a360da1f6fefe767bcce5e353d4c854eb9522a4cc88194d1a7f4ddbf2a52d2794df41e8e75186d93e9770fa3359ba95025105769e957c3725b89132b03d769c2783a12d3f6d7dc3f4c6e7f56aa5ae0913d0c8ff118e5835cff8244334348bf9f0e8d8825e3352717fea3ebd088042f4d69c20ac62644056b2d977bd0fa3fe504a49c6937490f8651468c9a62c8c67765a1a0ee8b8995fe3de24f72656a30bfa83f60b4a42bc788d2bb6180141ed9e3ccea1f29968881be449d3bcde33a44aa968fae47083d8ff8e8c422e3aa6b67431ad0a5b087737f3e83c38ce1fc0e672f72492f30aff4134dc3cc23fbdd366dbd1aaa6c554fa6e3851c6f71816ddce67c717e6837aaab11afb22411955fcfa54ec4decd7074311bd960e08cb0abb8ea826083191fd7206ddbf51efe7a16608560a1da71afecd984e192605c2c158025621f826e6a816bb4bab40a610f5697b4477ed649d28bb90307197e83bd4f733467290338f3054f8c0d22215744bf1c70807bfab8da271117d708ebcb891aa0d9686ee3021a30254bee240d597a1eb3d2abfc0bf558fc3acf6b783090517a5810e5851a7464047948d18b7daf443000a46ff25dbc0e18fe61354d26e87fe6abd452cb92402718b4a01c8883f9da27c6d5e51f8aa974f70a36504cd06f53dff8fc1e855939a43e50d5ef9a2dd5cb82ca27897ab886b1c62614616ad3f58492e9b736c0cdd620f630f5b8b19401a0c6ca2056d8450eb044c551a2ccd9d5c8726500d3f9edea46d73a55e4842e28c166f868f47a40a725fd84338dcbc9000b7adda2dc47c28c3df392abaab09f2967e4449f9af27c8ad1d7acf2f885d426a8fc48eda455128f446a208ddc8fa521e23c280d470543061d2a75a08c8b420690cff64c2ea80bd6a084cf458a7c7d34abb3c0e5879bc9b5d97f805ad38a83fb5a23702aeb3e2805bee1ab89129b88dc00f60f1d0863f9747d78b6189d17a7c275a12a39c1d11a204d917adfcc1326a2e99781374683613ddb5c24f2d97e92f1226a398d3bb46de69af1178b466acecaa835040f87f6fa6252128f7dc10f5212ec64fa2da31273d3b51f81ec410074e5fdcb6c00abcf4e139677287cd875e59487c1c1aaf3e0bc52e6fe2533ac18ed424bad6cca18fabe45ab340e75a8a74959a2a00459867ef5ccf5ace430a6c26e7c06f7478a500ebe6be27fe12559ea70439177f01b5e9a6d871643fb3f18ee462a08cd4467542bd1b37d7593463a3e7416a51f3808a89496bb6f1021c48e05ea237e0a69851c11bb7843828204b63c26db8ac575f667b3b91eef6a7d5596d6a73b71f36ac0cb64f69350695cd62e110e324a9063fafb92fed784e43e86dd6f846ff952249478619dfd16e24ece8f0c808b779c4fd5094fda1a07ab06d435b96630960943091544a91c2672a8a503e01cfa2d86075262db26261e485126fb6fbaed4837bc92f401dc4975f9e84597f18a96469e8e22509e0393dc53651f93e2d1fff31d520f42bbc04e3c1c2c15b662eed19bcb851e93ce73f206d9c922c4c89833abfd7a800f82dde476ec75f2f6f1b37f0a91eeadd31c370f4a85a65456d655c93bdf873ce0085044ef80aadb5c90061a6c685c270958efc3234909655f42e0cdf065e89a7ee56462780380577ab5739deea62c716a7f1214e6b84f6c7c0c04ab86569d70663dfa383046ca471e7811d92af3d21b7a19058467368cd45224615b2ea54b7e7b85f7e442a3b5a95d45ea09f8590bd038ba205176596702dfc0dde072585fa3e8ab4122eac4734ea18d699be7dbdc946e83968c10f4e4d1878dc63cac32886c8283546e2547d3e38e48e5a05a47087a58963d714e236f59349afd26ac4ed3763795e79ed5e9918eaa44ce1c4b3a2b6246ff8c031cc4cd089410a73642c19d6d19f391a064cede348f49a380fa3c5d7f2593f8cf537cb006c75dd97bd42cb21b57391f51412c2e50bb701ac129d9c372d856cc34667c0102a2b4b97f0ae6a0c819423e1e409a03d14f2ea7383d52d3789711bfdae8577413e9455e0dcb0858c663d767aebc0b0a9c0ec9297feb40534539e929e3796ddffe76e5a1b314375f767d84c9a895bffc18abc4f5906ee9bed8350ce37e4a25846434711a9de56a31b2421fd1985b4fa61716f38d4007807e0c824af1459bb65dda5353695d6c033ee33a504021a5fb93cb0e23041ab28933041d05503ffe02c6b95d0fe3cf61bd6fbf66c97dbc2650fc434d45692e7aaabced230e881abedd85d460d21097bb682fac3b5dd8a12c8982e56adf072d080987323eee3eb2932e59fc4e5509f56c06a86265c45b9759141ca79a88fe1fb57ff88cb86f75b63250f1f7282f8854806df52659c3c7ec400c01632141262396944abea5cef7f8359c11abeb208c2c8694e986b995138b6dcf7f473a60aff58d84dd20e6d6cab1ee9355fdb5a4938e2ce8afe1a442bda36510e78732b451ca59a408c5d86bfce2c89788158d66edff80df23dbdff7732f95357c9972dd41fcf5be15f1e4ca058f958ec02b67c8fe0ebf060bc514225c43bc</script>
+  <div class="hbe hbe-content">
+    <div class="hbe hbe-input hbe-input-default">
+      <input class="hbe hbe-input-field hbe-input-field-default" type="password" id="hbePass">
+      <label class="hbe hbe-input-label hbe-input-label-default" for="hbePass">
+        <span class="hbe hbe-input-label-content hbe-input-label-content-default">Hey, password is required here.</span>
+      </label>
+    </div>
+  </div>
+</div>
+<link href="/css/hbe.style.css" rel="stylesheet" type="text/css"><script data-swup-reload-script type="module" src="/js/plugins/hbe.js"></script>
+<script data-swup-reload-script type="module">
+import {initHBE} from "/js/plugins/hbe.js";
+  console.log("[hexo-blog-encrypt] loaded.");
+  initHBE();
+</script>
+
+		</div>
+
+		
+		<div class="post-copyright-info w-full my-8 px-2 sm:px-6 md:px-8">
+			<div class="article-copyright-info-container">
+    <ul>
+        <li><strong>标题:</strong> SomeoneLearning</li>
+        <li><strong>作者:</strong> SomeoneLearning</li>
+        <li><strong>创建于
+                :</strong> 2026-03-24 10:55:36</li>
+        
+            <li>
+                <strong>更新于
+                    :</strong> 2026-04-13 19:18:32
+            </li>
+        
+        <li>
+            <strong>链接:</strong> https://someonelearning.github.io/2026/03/24/SomeoneLearning/
+        </li>
+        <li>
+            <strong>
+                版权声明:
+            </strong>
+            
+
+            
+                本文章采用 <a class="license" target="_blank" rel="noopener" href="https://creativecommons.org/licenses/by-nc-sa/4.0">CC BY-NC-SA 4.0</a> 进行许可。
+            
+        </li>
+    </ul>
+</div>
+
+		</div>
+		
+
+		
+		<ul class="post-tags-box text-lg mt-1.5 flex-wrap justify-center flex md:hidden">
+			
+			<li class="tag-item mx-0.5">
+				<a href="/tags/Private/">#Private</a>&nbsp;
+			</li>
+			
+		</ul>
+		
+
+		
+
+		
+		<div class="article-nav my-8 flex justify-between items-center px-2 sm:px-6 md:px-8">
+			
+			<div class="article-prev border-border-color shadow-redefine-flat shadow-shadow-color-2 rounded-medium px-4 py-2 hover:shadow-redefine-flat-hover hover:shadow-shadow-color-2">
+				<a class="prev" rel="prev" href="/2026/03/24/tourism/">
+					<span class="left arrow-icon flex justify-center items-center">
+						<i class="fa-solid fa-chevron-left"></i>
+					</span>
+					<span class="title flex justify-center items-center">
+						<span class="post-nav-title-item truncate max-w-48">上海周边旅游</span>
+						<span class="post-nav-item">上一篇</span>
+					</span>
+				</a>
+			</div>
+			
+			
+			<div class="article-next border-border-color shadow-redefine-flat shadow-shadow-color-2 rounded-medium px-4 py-2 hover:shadow-redefine-flat-hover hover:shadow-shadow-color-2">
+				<a class="next" rel="next" href="/2026/03/19/README/">
+					<span class="title flex justify-center items-center">
+						<span class="post-nav-title-item truncate max-w-48">博客搭建技巧</span>
+						<span class="post-nav-item">下一篇</span>
+					</span>
+					<span class="right arrow-icon flex justify-center items-center">
+						<i class="fa-solid fa-chevron-right"></i>
+					</span>
+				</a>
+			</div>
+			
+		</div>
+		
+
+
+		
+		<div class="comment-container px-2 sm:px-6 md:px-8 pb-8">
+			<div class="comments-container mt-10 w-full ">
+    <div id="comment-anchor" class="w-full h-2.5"></div>
+    <div class="comment-area-title w-full my-1.5 md:my-2.5 text-xl md:text-3xl font-bold">
+        评论
+    </div>
+    
+
+        
+            
+    <div id="gitalk-container"></div>
+    <script data-swup-reload-script
+            src="https://cdnjs.cloudflare.com/ajax/libs/gitalk/1.8.0/gitalk.min.js"></script>
+    <script data-swup-reload-script>
+        (function() {
+            const startPath = location.pathname;
+            const startTime = Date.now();
+            const retryDelay = 200;
+            const retryLimit = 5000;
+
+            const runGitalk = () => {
+                if (location.pathname !== startPath) {
+                    return;
+                }
+
+                const container = document.getElementById('gitalk-container');
+                if (!container || typeof Gitalk === 'undefined') {
+                    if (Date.now() - startTime < retryLimit) {
+                        setTimeout(runGitalk, retryDelay);
+                    }
+                    return;
+                }
+
+                container.innerHTML = '';
+
+                let pageKey = decodeURI(location.pathname);
+                const maxLength = 50;
+                if (pageKey.length > maxLength) {
+                    pageKey = pageKey.substring(0, maxLength - 3) + '...';
+                }
+
+                try {
+                    new Gitalk({
+                        clientID: 'Ov23li6fx9mq3LE433si',
+                        clientSecret: '68f4cd82b61e6fffcf52a98cea0baf1e35865cfc',
+                        repo: 'Gitalk',
+                        owner: 'SomeoneLearning',
+                        admin: ['SomeoneLearning'],
+                        id: pageKey,
+                        language: 'zh-CN,default',
+                        proxy: 'https://github.com/login/oauth/access_token'
+                    }).render(container);
+                } catch (e) {
+                    window.Gitalk = null;
+                }
+            };
+
+            runGitalk();
+        })();
+    </script>
+
+
+
+        
+    
+</div>
+
+		</div>
+		
+	</div>
+
+	
+	<div class="toc-content-container">
+		<div class="post-toc-wrap">
+	<div class="post-toc">
+		<div class="toc-title">目录</div>
+		<div class="page-title">SomeoneLearning</div>
+		
+
+	</div>
+</div>
+	</div>
+	
+</div>
+
+			</div>
+
+			
+		</div>
+
+		<div class="main-content-footer">
+			<footer class="footer mt-5 py-5 h-auto text-base text-third-text-color relative border-t-2 border-t-border-color">
+    <div class="info-container py-3 text-center">
+        
+        <div class="text-center">
+            &copy;
+            
+              <span>2026</span>
+              -
+            
+            2026&nbsp;&nbsp;<i class="fa-solid fa-heart fa-beat" style="--fa-animation-duration: 0.5s; color: #f54545"></i>&nbsp;&nbsp;<a href="/">SomeoneLearning</a>
+            
+                
+                <p class="post-count space-x-0.5">
+                    <span>
+                        共撰写了 6 篇文章
+                    </span>
+                    
+                </p>
+            
+        </div>
+        
+            <script data-swup-reload-script src="https://cn.vercount.one/js"></script>
+            <div class="relative text-center lg:absolute lg:right-[20px] lg:top-1/2 lg:-translate-y-1/2 lg:text-right">
+                
+                    <span id="busuanzi_container_site_uv" class="lg:!block">
+                        <span class="text-sm">访问人数</span>
+                        <span id="busuanzi_value_site_uv"></span>
+                    </span>
+                
+                
+                    <span id="busuanzi_container_site_pv" class="lg:!block">
+                        <span class="text-sm">总访问量</span>
+                        <span id="busuanzi_value_site_pv"></span>
+                    </span>
+                
+            </div>
+        
+        <div class="relative text-center lg:absolute lg:left-[20px] lg:top-1/2 lg:-translate-y-1/2 lg:text-left">
+            <span class="lg:block text-sm">由 <?xml version="1.0" encoding="utf-8"?><!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd"><svg class="relative top-[2px] inline-block align-baseline" version="1.1" id="圖層_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px" width="1rem" height="1rem" viewBox="0 0 512 512" enable-background="new 0 0 512 512" xml:space="preserve"><path fill="#0E83CD" d="M256.4,25.8l-200,115.5L56,371.5l199.6,114.7l200-115.5l0.4-230.2L256.4,25.8z M349,354.6l-18.4,10.7l-18.6-11V275H200v79.6l-18.4,10.7l-18.6-11v-197l18.5-10.6l18.5,10.8V237h112v-79.6l18.5-10.6l18.5,10.8V354.6z"/></svg><a target="_blank" class="text-base" href="https://hexo.io">Hexo</a> 驱动</span>
+            <span class="text-sm lg:block">主题&nbsp;<a class="text-base" target="_blank" href="https://github.com/EvanNotFound/hexo-theme-redefine">Redefine v2.9.0</a></span>
+        </div>
+        
+        
+            <div>
+                博客已运行 <span class="odometer" id="runtime_days" ></span> 天 <span class="odometer" id="runtime_hours"></span> 小时 <span class="odometer" id="runtime_minutes"></span> 分钟 <span class="odometer" id="runtime_seconds"></span> 秒
+            </div>
+        
+        
+            <script data-swup-reload-script>
+                try {
+                    function odometer_init() {
+                    const elements = document.querySelectorAll('.odometer');
+                    elements.forEach(el => {
+                        new Odometer({
+                            el,
+                            format: '( ddd).dd',
+                            duration: 200
+                        });
+                    });
+                    }
+                    odometer_init();
+                } catch (error) {}
+            </script>
+        
+        
+        
+    </div>  
+</footer>
+		</div>
+	</div>
+
+	
+	<div class="post-tools">
+		<div class="post-tools-container">
+	<ul class="article-tools-list">
+		<!-- TOC aside toggle -->
+		
+		<li class="right-bottom-tools page-aside-toggle">
+			<i class="fa-regular fa-outdent"></i>
+		</li>
+		
+
+		<!-- go comment -->
+		
+		<li class="go-comment">
+			<i class="fa-regular fa-comments"></i>
+		</li>
+		
+	</ul>
+</div>
+	</div>
+	
+
+	<div class="right-side-tools-container">
+		<div class="side-tools-container">
+	<ul class="hidden-tools-list">
+		<li class="right-bottom-tools tool-font-adjust-plus flex justify-center items-center">
+			<i class="fa-regular fa-magnifying-glass-plus"></i>
+		</li>
+
+		<li class="right-bottom-tools tool-font-adjust-minus flex justify-center items-center">
+			<i class="fa-regular fa-magnifying-glass-minus"></i>
+		</li>
+
+		<li class="right-bottom-tools tool-dark-light-toggle flex justify-center items-center">
+			<i class="fa-regular fa-moon"></i>
+		</li>
+
+		<!-- rss -->
+		
+
+		
+
+		<li class="right-bottom-tools tool-scroll-to-bottom flex justify-center items-center">
+			<i class="fa-regular fa-arrow-down"></i>
+		</li>
+	</ul>
+
+	<ul class="visible-tools-list">
+		<li class="right-bottom-tools toggle-tools-list flex justify-center items-center">
+			<i class="fa-regular fa-cog fa-spin"></i>
+		</li>
+		
+		<li class="right-bottom-tools tool-scroll-to-top flex justify-center items-center">
+			<i class="arrow-up fas fa-arrow-up"></i>
+			<span class="percent"></span>
+		</li>
+		
+		
+	</ul>
+</div>
+	</div>
+
+	<div class="image-viewer-container" role="dialog" aria-modal="true" aria-label="图片查看器">
+	<button class="image-viewer-close" type="button" aria-label="关闭">
+		<i class="fa-solid fa-xmark"></i>
+	</button>
+	<button class="image-viewer-prev" type="button" aria-label="上一页">
+		<i class="fa-solid fa-chevron-left"></i>
+	</button>
+	<div class="image-viewer-frame">
+		<img src="" alt="">
+	</div>
+	<div class="image-viewer-exif-panel hidden absolute left-1/2 bottom-20 -translate-x-1/2 w-[min(92vw,420px)] max-h-[60vh] overflow-hidden rounded-2xl bg-background-color-transparent-80 p-4 text-left shadow-redefine-flat backdrop-blur-md" role="dialog" aria-label="EXIF" aria-hidden="true">
+		<div class="flex items-center justify-between mb-3">
+			<span class="text-sm font-semibold text-first-text-color">EXIF</span>
+			<button class="image-viewer-exif-close flex h-8 w-8 items-center justify-center rounded-full bg-background-color-transparent-80 text-first-text-color transition hover:bg-background-color-transparent-40" type="button" aria-label="关闭">
+				<i class="fa-solid fa-xmark text-[0.65rem]"></i>
+			</button>
+		</div>
+		<div class="image-viewer-exif-cards grid grid-cols-1 sm:grid-cols-2 gap-3 max-h-[50vh] overflow-y-auto pr-1 scrollbar-hide"></div>
+		<template class="image-viewer-exif-card-template">
+			<div class="rounded-lg bg-background-color-transparent-40 px-3 py-2">
+				<div class="image-viewer-exif-card-header flex items-center gap-2 mb-1">
+					<i class="image-viewer-exif-card-icon fa-solid fa-circle-info text-xs text-third-text-color"></i>
+					<div class="image-viewer-exif-card-title text-xs font-semibold text-first-text-color"></div>
+				</div>
+				<div class="image-viewer-exif-card-items flex flex-col gap-1"></div>
+			</div>
+		</template>
+	</div>
+	<button class="image-viewer-exif-toggle flex items-center gap-2 hidden absolute left-1/2 bottom-6 -translate-x-1/2 rounded-full border border-border-color bg-background-color-transparent-80 px-4 py-2 text-first-text-color backdrop-blur-md transition hover:bg-background-color-transparent-40" type="button" aria-label="EXIF" aria-expanded="false">
+		<i class="fa-solid fa-circle-info text-xs"></i>
+		<span class="text-xs font-semibold uppercase tracking-wider">EXIF</span>
+	</button>
+	<button class="image-viewer-next" type="button" aria-label="下一页">
+		<i class="fa-solid fa-chevron-right"></i>
+	</button>
+</div>
+
+
+	
+
+</main>
+
+
+
+<script src="/js/build/libs/Swup.min.js"></script>
+
+<script src="/js/build/libs/SwupSlideTheme.min.js"></script>
+
+<script src="/js/build/libs/SwupScriptsPlugin.min.js"></script>
+
+<script src="/js/build/libs/SwupProgressPlugin.min.js"></script>
+
+<script src="/js/build/libs/SwupScrollPlugin.min.js"></script>
+
+<script src="/js/build/libs/SwupPreloadPlugin.min.js"></script>
+
+<script>
+    window.swup = new Swup({
+        plugins: [
+            new SwupScriptsPlugin({
+                optin: true,
+            }),
+            new SwupProgressPlugin(),
+            new SwupScrollPlugin({
+                offset: 80,
+            }),
+            new SwupSlideTheme({
+                mainElement: ".main-content-body",
+            }),
+            new SwupPreloadPlugin(),
+        ],
+        containers: ["#swup"],
+    });
+
+    window.dispatchEvent(
+        new CustomEvent("redefine:swup:ready", {
+            detail: {
+                swup: window.swup,
+            },
+        }),
+    );
+</script>
+
+
 
 
 	
